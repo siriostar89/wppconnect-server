@@ -2,8 +2,8 @@ name: Sync upstream & Build Docker
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # Ogni 6 ore (adatta se vuoi)
-  workflow_dispatch:  # Manuale via UI
+    - cron: '0 */6 * * *'  # Ogni 6 ore
+  workflow_dispatch:
 
 jobs:
   sync:
@@ -14,30 +14,46 @@ jobs:
         with:
           owner: wppconnect-team
           repo: wppconnect-server
-          head: main  # Branch upstream da seguire
-          base: main  # Branch tuo fork da aggiornare
+          head: main
+          base: main
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  docker:
+  build-docker:
     needs: sync
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write  # Per GHCR
+      packages: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v6
         with:
           ref: main
 
-      - name: Login to GHCR  # O Docker Hub con secrets dedicati
+      # Build steps originali (Node + npm)
+      - name: Setup Node
+        uses: actions/setup-node@v6.2.0
+        with:
+          node-version: 24.13.0
+          cache: 'npm'  # Semplifica cache npm
+
+      - name: Install Dependencies
+        run: npm ci || npm install
+        env:
+          PUPPETEER_SKIP_DOWNLOAD: true
+
+      - name: Build source
+        run: npm run build
+
+      # Docker build & push
+      - name: Login to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup QEMU (multi-platform)
+      - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
 
       - name: Setup Docker Buildx
@@ -47,11 +63,11 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile  # Conferma path nel repo
+          file: ./Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/wppconnect-server:latest
             ghcr.io/${{ github.repository_owner }}/wppconnect-server:${{ github.sha }}
-          platforms: linux/amd64,linux/arm64  # Opzionale, multi-arch
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
