@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Sync fork with upstream
-        uses: tgymnich/fork-sync@v1.7.2  # Versione stabile
+        uses: tgymnich/fork-sync@v2.0.10
         with:
           owner: wppconnect-team
           repo: wppconnect-server
