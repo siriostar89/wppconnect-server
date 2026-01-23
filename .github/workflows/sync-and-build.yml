@@ -28,18 +28,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6  # La tua versione funziona[file:36]
 
-      - name: Setup Node con Corepack
+      - name: Setup Node
         uses: actions/setup-node@v6.2.0
         with:
           node-version: '22.21.1'
           cache: 'yarn'
 
-      - name: Enable Corepack per Yarn 4
-        run: corepack enable yarn  # Abilita Yarn esatto da packageManager[web:38][web:41]
+      - name: Enable Corepack
+        run: |
+          corepack enable  # Abilita TUTTI i shims (yarn, pnpm, npm)[web:38]
+          corepack prepare yarn@4.12.0 --activate  # Forza download/attiva 4.12.0 esatta[web:57]
 
       - name: yarn install & build
         run: |
-          yarn install --immutable  # Usa yarn.lock con versione esatta
+          yarn --version  # Verifica: 4.12.0
+          yarn install --immutable
           yarn run build
 
       # Docker steps (già OK nei log)
