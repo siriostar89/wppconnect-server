@@ -28,15 +28,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6  # La tua versione funziona[file:36]
 
-      - name: Setup Node **22** (richiesto package.json)
-        uses: actions/setup-node@v6.2.0  # La tua versione OK[file:36]
+      - name: Setup Node con Corepack
+        uses: actions/setup-node@v6.2.0
         with:
-          node-version: '22.21.1'  # Da warning npm EBADENGINE[file:36]
-          cache: 'yarn'  # Per yarn.lock
+          node-version: '22.21.1'
+          cache: 'yarn'
 
-      - name: Install deps & build  # Per fix yarn.lock se mancante
+      - name: Enable Corepack per Yarn 4
+        run: corepack enable yarn  # Abilita Yarn esatto da packageManager[web:38][web:41]
+
+      - name: yarn install & build
         run: |
-          yarn install  # Genera yarn.lock pulito
+          yarn install --immutable  # Usa yarn.lock con versione esatta
           yarn run build
 
       # Docker steps (già OK nei log)
